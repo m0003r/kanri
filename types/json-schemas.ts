@@ -43,7 +43,7 @@ const kanriTagSchema = z.object({
   style: z.string().optional(),
 });
 
-const kanriCardSchema = z.object({
+export const kanriCardSchema = z.object({
   color: z.string().optional(),
   description: z.string().optional(),
   id: z.string().optional(),

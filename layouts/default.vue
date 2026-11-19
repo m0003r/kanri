@@ -36,6 +36,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>. -->
 </template>
 
 <script setup>
+import { startBoardIpc } from "@/utils/boardIpc";
 import { hslToHex, rgbToHsl } from "@/utils/colorUtils";
 import { dark } from "@/utils/themes";
 
@@ -63,6 +64,7 @@ onMounted(async () => {
   setLocaleCookie(settings.locale);
 
   mounted.value = true;
+  startBoardIpc(boards).catch(error => console.error("Kanri IPC could not start:", error));
 });
 
 watch(systemTheme, async (newValue) => {

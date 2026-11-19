@@ -9,6 +9,9 @@
     windows_subsystem = "windows"
 )]
 
+#[cfg(unix)]
+mod board_ipc;
+
 use tauri::Manager;
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_window_state::StateFlags;
@@ -26,7 +29,16 @@ pub fn run() {
         std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
     }
 
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(unix)]
+    let builder = builder
+        .manage(board_ipc::BoardIpc::default())
+        .invoke_handler(tauri::generate_handler![
+            board_ipc::start_board_ipc,
+            board_ipc::finish_board_ipc
+        ]);
+
+    builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
