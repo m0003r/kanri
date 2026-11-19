@@ -43,7 +43,7 @@ const kanriTagSchema = z.object({
   style: z.string().optional(),
 });
 
-export const kanriCardSchema = z.object({
+const kanriCardSchema = z.object({
   color: z.string().optional(),
   description: z.string().optional(),
   id: z.string().optional(),
@@ -58,6 +58,8 @@ export const kanriCardSchema = z.object({
     )
     .optional(),
   dueDate: z.string().optional().nullable(),
+  isDueDateCompleted: z.boolean().optional(),
+  isDueDateCounterRelative: z.boolean().optional(),
   tags: z.array(kanriTagSchema).optional().nullable(),
 });
 
@@ -82,6 +84,7 @@ export const kanriBoardSchema = z.object({
   columns: z.array(kanriColumnSchema),
   id: z.string(),
   lastEdited: z.string().optional(),
+  createdAt: z.string().optional(),
   title: z.string(),
 });
 

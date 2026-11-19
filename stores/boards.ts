@@ -26,9 +26,6 @@ import { generateUniqueID } from "@/utils/idGenerator";
 
 type Pin = { id: string; title: string; pinIcon?: string; pinIconText?: string };
 
-// Autosave and IPC share the same write order.
-let pendingSave: Promise<void> = Promise.resolve();
-
 export const useBoardsStore = defineStore("boards", {
   state: () => ({
     boards: [] as Board[],
@@ -55,15 +52,17 @@ export const useBoardsStore = defineStore("boards", {
       const tauri = useTauriStore().store;
       this.boards = (await tauri.get("boards")) || [];
     },
-    save() {
+    async save() {
       const tauri = useTauriStore().store;
-      const write = pendingSave.then(async () => {
+      try {
         await tauri.set("boards", this.boards);
         await tauri.set("pins", this.pins);
         await tauri.save();
-      });
-      pendingSave = write.catch(() => {});
-      return write;
+      } catch (error) {
+        console.error("Failed to save boards/pins:", error);
+        // Consider user notification or rollback strategy
+        throw error;
+      }
     },
 
     // Board CRUD

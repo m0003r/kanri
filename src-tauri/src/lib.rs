@@ -9,8 +9,8 @@
     windows_subsystem = "windows"
 )]
 
-#[cfg(unix)]
-mod board_ipc;
+#[cfg(target_os = "macos")]
+mod board_documents;
 
 use tauri::Manager;
 use tauri_plugin_autostart::MacosLauncher;
@@ -30,15 +30,14 @@ pub fn run() {
     }
 
     let builder = tauri::Builder::default();
-    #[cfg(unix)]
+    #[cfg(target_os = "macos")]
     let builder = builder
-        .manage(board_ipc::BoardIpc::default())
+        .manage(board_documents::PendingDocuments::default())
         .invoke_handler(tauri::generate_handler![
-            board_ipc::start_board_ipc,
-            board_ipc::finish_board_ipc
+            board_documents::board_documents_ready
         ]);
 
-    builder
+    let app = builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
@@ -69,6 +68,13 @@ pub fn run() {
                 }));
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|_app, _event| {
+        #[cfg(target_os = "macos")]
+        if let tauri::RunEvent::Opened { urls } = _event {
+            board_documents::open(_app, urls);
+        }
+    });
 }

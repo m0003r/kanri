@@ -97,17 +97,12 @@ pnpm tauri build
 **Copyright (c) 2022-2026 trobonox (trobo@kanriapp.com)**. Licensed under GPL v3 (with some files under Apache 2.0 or other licenses stated in the files themselves).
 The Kanri logo, name and other branding are **NOT** open source, full copyright belongs to trobonox.
 
-## Local board IPC (macOS and Linux)
+## Open a board document from a script (macOS)
 
-With Kanri open, scripts can read and change its boards over a Unix socket in the app data directory. The socket directory is accessible only to the local user. The client accepts a JSON file or JSON on stdin:
+Save Kanri's single-board export JSON with the extension `.kanri-board`, then open it with the macOS document handler:
 
 ```sh
-echo '{"op":"board.list"}' | python3 scripts/board-ipc.py
-echo '{"op":"board.get","boardId":"BOARD"}' | python3 scripts/board-ipc.py
-echo '{"op":"card.upsert","boardId":"BOARD","cardId":"my-stable-id","columnId":"TODO","fields":{"name":"Review the changes"}}' | python3 scripts/board-ipc.py
-echo '{"op":"card.upsert","boardId":"BOARD","cardId":"my-stable-id","columnId":"DONE","position":0}' | python3 scripts/board-ipc.py
+open -a Kanri ./work.kanri-board
 ```
 
-Get board and column IDs from `board.list` and card IDs from `board.get`. For a new card, supply `columnId` and `fields.name`. Existing cards keep their column when `columnId` is omitted and keep fields absent from `fields`. To move a card, give the target column ID. An optional zero-based `position` places the card within its target column, otherwise moved and new cards go at the end. A successful write is acknowledged after Kanri saves it, and open boards reflect the change.
-
-Other clients can send one UTF-8 JSON object followed by a newline per connection (at most 1 MiB including the newline). Kanri responds with one JSON line, either `{"ok":true,"result":...}` or `{"ok":false,"code":"...","error":"..."}`. Check the board before retrying an unconfirmed write. On macOS the socket is at `~/Library/Application Support/tech.trobonox.kanri/ipc/kanri.sock`. On Linux it is at `${XDG_DATA_HOME:-~/.local/share}/tech.trobonox.kanri/ipc/kanri.sock`.
+This works with Kanri closed or already open. Kanri creates a board if the file's `id` is new or replaces the matching board in place. Keep the same board ID and stable column and card IDs for automated updates. Send the whole board, including cards and columns you want to keep. Kanri saves it using its normal autosave. A successful `open` confirms that macOS accepted the request. Import errors appear in Kanri.

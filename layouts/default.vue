@@ -36,11 +36,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>. -->
 </template>
 
 <script setup>
-import { startBoardIpc } from "@/utils/boardIpc";
+import { invoke, isTauri } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { message } from "@tauri-apps/plugin-dialog";
+import { platform } from "@tauri-apps/plugin-os";
+import { kanriBoardSchema } from "@/types/json-schemas";
 import { hslToHex, rgbToHsl } from "@/utils/colorUtils";
 import { dark } from "@/utils/themes";
 
-const { setLocale, setLocaleCookie } = useI18n();
+const { setLocale, setLocaleCookie, t } = useI18n();
 
 const settings = useSettingsStore();
 const theme = useThemeStore();
@@ -64,7 +68,25 @@ onMounted(async () => {
   setLocaleCookie(settings.locale);
 
   mounted.value = true;
-  startBoardIpc(boards).catch(error => console.error("Kanri IPC could not start:", error));
+
+  if (isTauri() && platform() === "macos") {
+    await listen("kanri-board-document", ({ payload }) => {
+      if ("error" in payload) {
+        void message(payload.error, { title: "Kanri", kind: "error" });
+        return;
+      }
+      const parsed = kanriBoardSchema.safeParse(payload.board);
+      if (!parsed.success || !parsed.data.id.trim()) {
+        void message(t("pages.import.importErrorGoodJsonFaultyData"), { title: "Kanri", kind: "error" });
+        return;
+      }
+      const board = parsed.data;
+      board.createdAt ??= boards.boardById(board.id)?.createdAt;
+      boards.upsertBoard(board);
+      boards.updateBoardPin(board.id);
+    });
+    await invoke("board_documents_ready");
+  }
 });
 
 watch(systemTheme, async (newValue) => {

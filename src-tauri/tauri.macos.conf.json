@@ -1,0 +1,15 @@
+{
+  "bundle": {
+    "fileAssociations": [
+      {
+        "ext": ["kanri-board"],
+        "name": "Kanri Board",
+        "role": "Editor",
+        "exportedType": {
+          "identifier": "tech.trobonox.kanri.board",
+          "conformsTo": ["public.json"]
+        }
+      }
+    ]
+  }
+}
